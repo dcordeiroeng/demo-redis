@@ -1,10 +1,10 @@
 package com.redis.demo.dto
 
 data class Cartao(
-    val numero: String, // Número do cartão
-    val nomePortador: String, // Nome do titular
-    val dataValidade: String, // Data de validade
-    val cvv: String // Código de segurança
+    val numero: String,
+    val nomePortador: String,
+    val dataValidade: String,
+    val cvv: String
 ) {
     override fun toString(): String {
         return "Cartao(numero='$numero', nomePortador='$nomePortador', dataValidade=$dataValidade)"
