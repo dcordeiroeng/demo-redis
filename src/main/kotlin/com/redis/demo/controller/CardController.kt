@@ -1,65 +1,54 @@
 package com.redis.demo.controller
 
-import com.redis.demo.dto.Cartao
+import com.redis.demo.dto.Card
 import com.redis.demo.service.RedisService
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
-import org.springframework.util.StopWatch
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/api/cartoes")
-class CartaoController(
-    private val redisService: RedisService
-) {
+@RequestMapping("/api/cards")
+class CardController(private val redisService: RedisService) {
 
-    private val logger: Logger = LoggerFactory.getLogger(CartaoController::class.java)
+    private val logger = LoggerFactory.getLogger(CardController::class.java)
 
     @PostMapping("/save")
-    fun saveCartoes(
-        @RequestParam cpf: String,
-        @RequestParam canal: String,
-        @RequestBody cartoes: List<Cartao>
+    fun saveCards(
+        @RequestParam document: String,
+        @RequestParam channel: String,
+        @RequestBody cards: List<Card>
     ): ResponseEntity<String> {
-
-        val key = "VQ1$cpf#$canal"
-        redisService.saveCartoes(key, cpf, cartoes)
-
-        logger.info("Cartões salvos!")
-
-        return ResponseEntity.ok("Cartões salvos com sucesso!")
+        val key = "$document#$channel"
+        redisService.saveCards(key, document, cards)
+        logger.info("Cards saved for document: $document, channel: $channel, key: $key")
+        return ResponseEntity.ok("Cards saved successfully!")
     }
 
     @GetMapping("/retrieve")
-    fun retrieveCartoes(
-        @RequestParam cpf: String,
-        @RequestParam canal: String,
+    fun retrieveCards(
+        @RequestParam document: String,
+        @RequestParam channel: String
     ): ResponseEntity<Any> {
-
-        val key = "VQ1$cpf#$canal"
-        val cartoes = redisService.retrieveCartoes(cpf, key)
-
-        if (cartoes != null) {
-            redisService.saveCartoes(key, cpf, cartoes)
-            logger.info("Cartões retornados: ${cartoes.size}")
-            return ResponseEntity.ok(cartoes)
+        val key = "$document#$channel"
+        val cards = redisService.retrieveCards(document, key)
+        return if (cards != null) {
+            redisService.saveCards(key, document, cards)
+            logger.info("Cards returned: ${cards.size} for document: $document, channel: $channel, key: $key")
+            ResponseEntity.ok(cards)
         } else {
-            return ResponseEntity.status(404).body("Cartões não encontrados para a chave fornecida.")
+            logger.info("Not found cards for document: $document, channel: $channel, key: $key")
+            ResponseEntity.status(404).body("Not found cards for this document")
         }
     }
 
     @DeleteMapping("/delete")
-    fun deleteCartoes(
-        @RequestParam cpf: String
-    ): ResponseEntity<Any> {
-
-        val result = redisService.deleteCartoes(cpf)
-
-        if (result) {
-            return ResponseEntity.ok("DELETE feito com sucesso")
+    fun deleteCards(@RequestParam document: String): ResponseEntity<Any> {
+        return if (redisService.deleteCards(document)) {
+            logger.info("Cards deleted for document: $document")
+            ResponseEntity.ok("Cards deleted successfully!")
         } else {
-            return ResponseEntity.status(404).body("CPF nao encontrado")
+            logger.info("Not found cards for document: $document")
+            ResponseEntity.status(404).body("Document not found or no cards to delete")
         }
     }
 }

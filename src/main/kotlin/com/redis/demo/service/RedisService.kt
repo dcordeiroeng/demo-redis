@@ -1,6 +1,6 @@
 package com.redis.demo.service
 
-import com.redis.demo.dto.Cartao
+import com.redis.demo.dto.Card
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Service
@@ -18,30 +18,26 @@ class RedisService(
     private val replicaSetOps = replicaRedisTemplate.opsForSet()
     private val ttl: Long = 3 * 60
 
-    fun saveCartoes(key: String, cpf: String, cartoes: List<Cartao>) {
+    fun saveCards(key: String, document: String, cards: List<Card>) {
         masterRedisTemplate.executePipelined {
-            valueOps.set(key, cartoes, ttl, TimeUnit.SECONDS)
-            setOps.add(cpf, key)
-            masterRedisTemplate.expire(cpf, ttl, TimeUnit.SECONDS)
+            valueOps.set(key, cards, ttl, TimeUnit.SECONDS)
+            setOps.add(document, key)
+            masterRedisTemplate.expire(document, ttl, TimeUnit.SECONDS)
             null
         }
     }
 
-    fun retrieveCartoes(cpf: String, key: String): List<Cartao>? {
-        val isMember = replicaSetOps.isMember(cpf, key)
+    fun retrieveCards(document: String, key: String): List<Card>? {
+        val isMember = replicaSetOps.isMember(document, key)
         if (isMember == true) {
-            return replicaValueOps.get(key) as List<Cartao>?
+            return replicaValueOps.get(key) as List<Card>
         }
         return null
     }
 
-    fun deleteCartoes(cpf: String): Boolean {
-        val keysForCpf = setOps.members(cpf)
-        if (keysForCpf.isNullOrEmpty()) {
-            return false
-        }
-        val allKeys = (keysForCpf + cpf).map { it.toString() }
-        masterRedisTemplate.unlink(allKeys)
+    fun deleteCards(document: String): Boolean {
+        val keysForDocument = setOps.members(document) ?: return false
+        masterRedisTemplate.unlink((keysForDocument + document).map { it.toString() })
         return true
     }
 }

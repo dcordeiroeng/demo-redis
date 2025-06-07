@@ -19,19 +19,6 @@ services:
     networks:
       - redis-net
 
-  loki:
-    image: grafana/loki:latest
-    ports:
-      - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-
-  promtail:
-    image: grafana/promtail:latest
-    volumes:
-      - /var/log:/var/log
-      - /etc/machine-id:/etc/machine-id
-    command: -config.file=/etc/promtail/config.yaml
-
 networks:
   redis-net:
     driver: bridge
