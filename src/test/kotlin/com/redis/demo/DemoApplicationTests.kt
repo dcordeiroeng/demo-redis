@@ -8,6 +8,11 @@ class DemoApplicationTests {
 
 	@Test
 	fun contextLoads() {
+		// Verifies that the Spring context loads successfully
 	}
 
+	@Test
+	fun mainMethodRuns() {
+		main(arrayOf())
+	}
 }

@@ -4,10 +4,12 @@ import com.redis.demo.dto.Card
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito.*
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.core.SetOperations
 import org.springframework.data.redis.core.ValueOperations
+import java.util.concurrent.TimeUnit
 
 class RedisServiceTest {
 
@@ -34,6 +36,27 @@ class RedisServiceTest {
         `when`(replicaRedisTemplate.opsForSet()).thenReturn(replicaSetOps)
 
         redisService = RedisService(masterRedisTemplate, replicaRedisTemplate)
+    }
+
+    @Test
+    fun `saveCards should set value, add to set, and expire document`() {
+        val key = "testKey"
+        val document = "testDoc"
+        val cards = listOf<Card>(mock(Card::class.java))
+        val ttl = 3 * 60L
+
+        `when`(masterRedisTemplate.executePipelined(any<org.springframework.data.redis.core.RedisCallback<Any>>()))
+            .thenAnswer { invocation ->
+                val callback = invocation.arguments[0] as org.springframework.data.redis.core.RedisCallback<Any>
+                callback.doInRedis(mock(org.springframework.data.redis.connection.RedisConnection::class.java))
+                null
+            }
+
+        redisService.saveCards(key, document, cards)
+
+        verify(valueOps).set(key, cards, ttl, TimeUnit.SECONDS)
+        verify(setOps).add(document, key)
+        verify(masterRedisTemplate).expire(document, ttl, TimeUnit.SECONDS)
     }
 
     @Test
