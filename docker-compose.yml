@@ -14,7 +14,7 @@ services:
     image: redis/redis-stack-server:latest
     container_name: redis-replica
     ports:
-      - "6380:6379"  # Expondo a porta do Redis replica
+      - "6380:6379"
     command: ["redis-server", "--appendonly", "yes", "--save", "60 1", "--replicaof", "redis-master", "6379", "--protected-mode", "no"]
     networks:
       - redis-net
